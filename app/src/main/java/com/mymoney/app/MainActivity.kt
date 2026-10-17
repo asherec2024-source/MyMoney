@@ -6,6 +6,9 @@ import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
 import androidx.activity.compose.setContent
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -105,7 +108,7 @@ class MainActivity:FragmentActivity() {
       androidx.compose.ui.Modifier.fillMaxSize(),
       contentAlignment=androidx.compose.ui.Alignment.Center
      ) {
-      androidx.compose.material3.Button(onClick={authenticate()}) {
+      androidx.compose.material3.Button(onClick={authenticate}) {
        androidx.compose.material3.Text("Unlock MyMoney")
       }
      }
