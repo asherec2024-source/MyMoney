@@ -1,7 +1,10 @@
 package com.mymoney.app
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
+import androidx.biometric.BiometricPrompt
+import androidx.biometric.BiometricManager
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -43,12 +46,31 @@ class MoneyVm(val db:MoneyDatabase):ViewModel() {
  fun saveTransaction(t:MoneyTransaction)=viewModelScope.launch {if(t.id==0L)dao.addTransaction(t) else dao.updateTransaction(t)}
  fun deleteTransaction(t:MoneyTransaction)=viewModelScope.launch {dao.deleteTransaction(t)}
 }
-class MainActivity:ComponentActivity() {
+class MainActivity:FragmentActivity() {
+ private val appUnlocked = androidx.compose.runtime.mutableStateOf(false)
+ private val lockEnabled = androidx.compose.runtime.mutableStateOf(false)
+ private fun authenticate() {
+  val allowed = BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+  val manager=BiometricManager.from(this)
+  if(manager.canAuthenticate(allowed)!=BiometricManager.BIOMETRIC_SUCCESS) return
+  val prompt=BiometricPrompt(this,ContextCompat.getMainExecutor(this),object:BiometricPrompt.AuthenticationCallback(){
+   override fun onAuthenticationSucceeded(result:BiometricPrompt.AuthenticationResult){super.onAuthenticationSucceeded(result);appUnlocked.value=true}
+  })
+  prompt.authenticate(BiometricPrompt.PromptInfo.Builder().setTitle("Unlock MyMoney").setSubtitle("Use your fingerprint, face or device screen lock").setAllowedAuthenticators(allowed).build())
+ }
+
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
+ lockEnabled.value=getSharedPreferences("security",MODE_PRIVATE).getBoolean("app_lock",false)
+ appUnlocked.value=!lockEnabled.value
+ if(lockEnabled.value) authenticate()
  val db=Room.databaseBuilder(applicationContext,MoneyDatabase::class.java,"mymoney.db").addMigrations(MIGRATION_1_2).build()
  setContent { val vm:MoneyVm=viewModel(factory=object:ViewModelProvider.Factory {
   override fun <T:ViewModel> create(modelClass:Class<T>):T { @Suppress("UNCHECKED_CAST") return MoneyVm(db) as T }
- }); MaterialTheme(colorScheme=lightColorScheme(primary=green)){MoneyApp(vm)} }
+ }); MaterialTheme(colorScheme=lightColorScheme(primary=green)){if(appUnlocked.value)MoneyApp(vm,lockEnabled.value){enabled->
+  if(enabled){val allowed=BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+   if(BiometricManager.from(this).canAuthenticate(allowed)==BiometricManager.BIOMETRIC_SUCCESS){lockEnabled.value=true;getSharedPreferences("security",MODE_PRIVATE).edit().putBoolean("app_lock",true).apply()} }
+  else {lockEnabled.value=false;getSharedPreferences("security",MODE_PRIVATE).edit().putBoolean("app_lock",false).apply()}
+ } else androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize(),contentAlignment=androidx.compose.ui.Alignment.Center){androidx.compose.material3.Button(onClick={authenticate}){androidx.compose.material3.Text("Unlock MyMoney")}}} }
  }
 }
 @OptIn(ExperimentalMaterial3Api::class)
