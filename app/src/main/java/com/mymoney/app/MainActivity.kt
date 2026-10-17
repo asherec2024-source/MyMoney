@@ -91,7 +91,6 @@ class MainActivity:ComponentActivity() {
  }
  }
  }
- }
  if(dialog=="account")AccountDialog(editAccount,onClose={dialog="";editAccount=null},onSave={vm.saveAccount(it);dialog="";editAccount=null})
  if(dialog=="method")MethodDialog(editMethod,onClose={dialog="";editMethod=null},onSave={vm.saveMethod(it);dialog="";editMethod=null})
  if(dialog=="transaction")TransactionDialog(editTx,accounts,methods,onClose={dialog="";editTx=null},onSave={vm.saveTransaction(it);dialog="";editTx=null})
