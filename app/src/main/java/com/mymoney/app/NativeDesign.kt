@@ -61,6 +61,7 @@ private val tabs = listOf(Triple("Home","⌂","Home"),Triple("Accounts","▣","A
  var editPlan by remember{mutableStateOf<FinancePlan?>(null)}
  var toast by remember{mutableStateOf("")}
  var exitDialog by remember{mutableStateOf(false)}
+ var showMore by remember{mutableStateOf(false)}
  val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
  BackHandler(enabled=!quick && editor.isEmpty()) {
      if(tab!="Home") tab="Home" else exitDialog=true
@@ -71,8 +72,8 @@ private val tabs = listOf(Triple("Home","⌂","Home"),Triple("Accounts","▣","A
  val planKind=when(tab){"Cards"->"Card";"EMIs"->"EMI";"Budgets"->"Budget";"Goals"->"Goal";else->""}
  Scaffold(containerColor=canvas,bottomBar={
  Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal=2.dp,vertical=7.dp),horizontalArrangement=Arrangement.SpaceEvenly){
- tabs.forEach{(id,symbol,label)->
- Column(Modifier.weight(1f).clickable{tab=id}.padding(vertical=5.dp),horizontalAlignment=Alignment.CenterHorizontally){
+ (tabs.take(4) + Triple("More","⋯","More")).forEach{(id,symbol,label)->
+ Column(Modifier.weight(1f).clickable{if(id=="More")showMore=true else tab=id}.padding(vertical=5.dp),horizontalAlignment=Alignment.CenterHorizontally){
  Text(symbol,fontSize=22.sp,color=if(tab==id)emerald else muted)
  Text(label,fontSize=8.sp,maxLines=1,fontWeight=FontWeight.Bold,color=if(tab==id)emerald else muted)
  }
@@ -153,6 +154,9 @@ private val tabs = listOf(Triple("Home","⌂","Home"),Triple("Accounts","▣","A
  }
  }
  }
+ if(showMore)AlertDialog(onDismissRequest={showMore=false},title={Text("More sections")},text={Column{
+ listOf("EMIs","Budgets","Goals","Reports","Settings").forEach{item->TextButton(onClick={tab=item;showMore=false}){Text(item)}}
+ }},confirmButton={TextButton(onClick={showMore=false}){Text("Close")}})
  if(exitDialog)AlertDialog(onDismissRequest={exitDialog=false},title={Text("Exit MyMoney?")},text={Text("Do you want to close MyMoney?")},confirmButton={TextButton(onClick={exitDialog=false; activity?.finish()}){Text("Exit")}},dismissButton={TextButton(onClick={exitDialog=false}){Text("Cancel")}})
  if(quick)AlertDialog(onDismissRequest={quick=false},title={Text("Quick actions")},text={Column(verticalArrangement=Arrangement.spacedBy(4.dp)){
  listOf("Expense" to "transaction","Income" to "transaction","Transfer" to "transfer","ATM cash" to "withdrawal","Add EMI" to "EMIs","Add card" to "Cards","Budget" to "Budgets","Goal" to "Goals","Account" to "account","Payment method" to "method").forEach{(label,target)->TextButton(onClick={quick=false;if(target in listOf("EMIs","Cards","Budgets","Goals")){tab=target;editPlan=null;editor="plan"}else if(target=="transfer"||target=="withdrawal"){toast="Transfer and ATM accounting are coming in a later update"}else{editor=target;if(target=="account")editAccount=null;if(target=="method")editMethod=null;if(target=="transaction")editTx=null}}){Text(label,color=emerald)}}
