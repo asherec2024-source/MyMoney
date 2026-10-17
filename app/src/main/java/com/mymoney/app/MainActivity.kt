@@ -30,6 +30,9 @@ private fun money(p:Long) = "₹%.2f".format(p/100.0)
 private fun paise(s:String) = ((s.toDoubleOrNull() ?: 0.0)*100).toLong()
 class MoneyVm(val db:MoneyDatabase):ViewModel() {
  val dao=db.dao()
+ val plans=dao.plans().stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),emptyList())
+ fun savePlan(p:FinancePlan)=viewModelScope.launch {if(p.id==0L)dao.addPlan(p) else dao.updatePlan(p)}
+ fun deletePlan(p:FinancePlan)=viewModelScope.launch {dao.deletePlan(p)}
  val accounts=dao.accounts().stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),emptyList())
  val methods=dao.methods().stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),emptyList())
  val transactions=dao.transactions().stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),emptyList())
@@ -42,14 +45,14 @@ class MoneyVm(val db:MoneyDatabase):ViewModel() {
 }
 class MainActivity:ComponentActivity() {
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
- val db=Room.databaseBuilder(applicationContext,MoneyDatabase::class.java,"mymoney.db").build()
+ val db=Room.databaseBuilder(applicationContext,MoneyDatabase::class.java,"mymoney.db").addMigrations(MIGRATION_1_2).build()
  setContent { val vm:MoneyVm=viewModel(factory=object:ViewModelProvider.Factory {
   override fun <T:ViewModel> create(modelClass:Class<T>):T { @Suppress("UNCHECKED_CAST") return MoneyVm(db) as T }
  }); MaterialTheme(colorScheme=lightColorScheme(primary=green)){MoneyApp(vm)} }
  }
 }
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun MoneyApp(vm:MoneyVm){
+@Composable fun LegacyMoneyApp(vm:MoneyVm){
  val accounts by vm.accounts.collectAsState()
  val methods by vm.methods.collectAsState()
  val transactions by vm.transactions.collectAsState()
