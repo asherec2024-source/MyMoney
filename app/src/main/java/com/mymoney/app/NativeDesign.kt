@@ -1,6 +1,7 @@
 package com.mymoney.app
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,7 +48,7 @@ private val tabs = listOf(Triple("Home","⌂","Home"),Triple("Accounts","▣","A
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun MoneyApp(vm:MoneyVm,lockEnabled:Boolean,onLockChange:(Boolean)->Unit){
+@Composable fun MoneyApp(vm:MoneyVm,lockEnabled:Boolean,onLockChange:(Boolean)->Unit,onLockNow:()->Unit){
  val accounts by vm.accounts.collectAsState()
  val methods by vm.methods.collectAsState()
  val tx by vm.transactions.collectAsState()
@@ -63,7 +64,7 @@ private val tabs = listOf(Triple("Home","⌂","Home"),Triple("Accounts","▣","A
  var exitDialog by remember{mutableStateOf(false)}
  val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
  BackHandler(enabled=!quick && editor.isEmpty()) {
-     if(tab!="Home" && tab!="Settings") tab="Home" else exitDialog=true
+     if(tab!="Home") tab="Home" else exitDialog=true
  }
  val income=tx.filter{it.kind=="Income"}.sumOf{it.amountPaise}
  val expenses=tx.filter{it.kind=="Expense"}.sumOf{it.amountPaise}
@@ -149,7 +150,7 @@ private val tabs = listOf(Triple("Home","⌂","Home"),Triple("Accounts","▣","A
  if(categories.isEmpty())item{Empty("Record expenses to see category reports.")}
  items(categories.entries.toList()){e->Panel{ItemRow("▥",e.key,"${e.value.size} transactions",rupees(e.value.sumOf{it.amountPaise}))}}
  }
- "Settings"->{item{Heading("Settings");Panel{Text("Offline native Android app",fontWeight=FontWeight.Bold,color=ink);Text("Data is stored locally using Room/SQLite. No demo records are inserted.",color=muted,fontSize=12.sp);Text("Backup and import are not implemented yet.",color=muted,fontSize=12.sp);Row(verticalAlignment=Alignment.CenterVertically){Text("App lock (biometrics / screen lock)",modifier=Modifier.weight(1f),color=ink,fontSize=13.sp);Switch(checked=lockEnabled,onCheckedChange=onLockChange)}};SmallButton("Payment methods"){tab="Accounts"}}}
+ "Settings"->{item{Heading("Settings");Panel{Text("Offline native Android app",fontWeight=FontWeight.Bold,color=ink);Text("Data is stored locally using Room/SQLite. No demo records are inserted.",color=muted,fontSize=12.sp);Text("Backup and import are not implemented yet.",color=muted,fontSize=12.sp);Row(verticalAlignment=Alignment.CenterVertically){Text("App lock (biometrics / screen lock)",modifier=Modifier.weight(1f),color=ink,fontSize=13.sp);Switch(checked=lockEnabled,onCheckedChange=onLockChange)};if(lockEnabled)SmallButton("Lock now"){onLockNow()}};SmallButton("Payment methods"){tab="Accounts"}}}
  }
  }
  }
