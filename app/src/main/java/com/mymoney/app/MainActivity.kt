@@ -70,7 +70,7 @@ class MainActivity:FragmentActivity() {
   if(enabled){val allowed=BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
    if(BiometricManager.from(this).canAuthenticate(allowed)==BiometricManager.BIOMETRIC_SUCCESS){lockEnabled.value=true;getSharedPreferences("security",MODE_PRIVATE).edit().putBoolean("app_lock",true).apply()} }
   else {lockEnabled.value=false;getSharedPreferences("security",MODE_PRIVATE).edit().putBoolean("app_lock",false).apply()}
- } else androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize(),contentAlignment=androidx.compose.ui.Alignment.Center){androidx.compose.material3.Button(onClick={authenticate}){androidx.compose.material3.Text("Unlock MyMoney")}}} }
+ } else androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize(),contentAlignment=androidx.compose.ui.Alignment.Center){androidx.compose.material3.Button(onClick={authenticate()}){androidx.compose.material3.Text("Unlock MyMoney")}}} }
  }
 }
 @OptIn(ExperimentalMaterial3Api::class)
