@@ -1,5 +1,6 @@
 package com.mymoney.app
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,16 +60,21 @@ private val tabs = listOf(Triple("Home","⌂","Home"),Triple("Accounts","▣","A
  var editTx by remember{mutableStateOf<MoneyTransaction?>(null)}
  var editPlan by remember{mutableStateOf<FinancePlan?>(null)}
  var toast by remember{mutableStateOf("")}
+ var exitDialog by remember{mutableStateOf(false)}
+ val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
+ BackHandler(enabled=!quick && editor.isEmpty()) {
+     if(tab!="Home" && tab!="Settings") tab="Home" else exitDialog=true
+ }
  val income=tx.filter{it.kind=="Income"}.sumOf{it.amountPaise}
  val expenses=tx.filter{it.kind=="Expense"}.sumOf{it.amountPaise}
  val balance=accounts.sumOf{a->a.openingPaise+tx.filter{it.accountId==a.id}.sumOf{if(it.kind=="Income")it.amountPaise else -it.amountPaise}}
  val planKind=when(tab){"Cards"->"Card";"EMIs"->"EMI";"Budgets"->"Budget";"Goals"->"Goal";else->""}
  Scaffold(containerColor=canvas,bottomBar={
- Row(Modifier.fillMaxWidth().background(Color.White).horizontalScroll(rememberScrollState()).padding(horizontal=5.dp,vertical=7.dp),horizontalArrangement=Arrangement.spacedBy(2.dp)){
+ Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal=2.dp,vertical=7.dp),horizontalArrangement=Arrangement.SpaceEvenly){
  tabs.forEach{(id,symbol,label)->
- Column(Modifier.width(53.dp).clickable{tab=id}.padding(vertical=5.dp),horizontalAlignment=Alignment.CenterHorizontally){
+ Column(Modifier.weight(1f).clickable{tab=id}.padding(vertical=5.dp),horizontalAlignment=Alignment.CenterHorizontally){
  Text(symbol,fontSize=22.sp,color=if(tab==id)emerald else muted)
- Text(label,fontSize=9.sp,fontWeight=FontWeight.Bold,color=if(tab==id)emerald else muted)
+ Text(label,fontSize=8.sp,maxLines=1,fontWeight=FontWeight.Bold,color=if(tab==id)emerald else muted)
  }
  }
  }
@@ -147,6 +153,7 @@ private val tabs = listOf(Triple("Home","⌂","Home"),Triple("Accounts","▣","A
  }
  }
  }
+ if(exitDialog)AlertDialog(onDismissRequest={exitDialog=false},title={Text("Exit MyMoney?")},text={Text("Do you want to close MyMoney?")},confirmButton={TextButton(onClick={exitDialog=false; activity?.finish()}){Text("Exit")}},dismissButton={TextButton(onClick={exitDialog=false}){Text("Cancel")}})
  if(quick)AlertDialog(onDismissRequest={quick=false},title={Text("Quick actions")},text={Column(verticalArrangement=Arrangement.spacedBy(4.dp)){
  listOf("Expense" to "transaction","Income" to "transaction","Transfer" to "transfer","ATM cash" to "withdrawal","Add EMI" to "EMIs","Add card" to "Cards","Budget" to "Budgets","Goal" to "Goals","Account" to "account","Payment method" to "method").forEach{(label,target)->TextButton(onClick={quick=false;if(target in listOf("EMIs","Cards","Budgets","Goals")){tab=target;editPlan=null;editor="plan"}else if(target=="transfer"||target=="withdrawal"){toast="Transfer and ATM accounting are coming in a later update"}else{editor=target;if(target=="account")editAccount=null;if(target=="method")editMethod=null;if(target=="transaction")editTx=null}}){Text(label,color=emerald)}}
  }},confirmButton={TextButton(onClick={quick=false}){Text("Close")}})
